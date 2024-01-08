@@ -1,89 +1,69 @@
-import { useEffect, useState } from 'react';
-import { ControlPanelContext } from './context';
-import { ControlPanel, Todo } from './components';
-import { createTodo, readTodos, updateTodo, deleteTodo } from './api';
-import { addTodoInTodos, findTodo, removeTodoInTodos, setTodoInTodos } from './utils';
-import { NEW_TODO_ID } from './constants';
+import { useEffect, useReducer } from 'react';
+import { Header, UserBlock } from './components';
+import { AppContext } from './context';
 import styles from './app.module.css';
 
-export const App = () => {
-	const [todos, setTodos] = useState([]);
-	const [searchPhrase, setSearchPhrase] = useState('');
-	const [isAlphabetSorting, setIsAlphabetSorting] = useState(false);
+const getUserFromServer = () => ({
+	id: 'alliase',
+	name: 'Иван',
+	age: 23,
+	email: 'ivan@gmail.com',
+	phone: '+7-999-999-9-9',
+});
 
-	const onTodoAdd = () => {
-		setTodos(addTodoInTodos(todos));
-	};
+const getAnotherUserFromServer = () => ({
+	id: 'alliasee',
+	name: 'Василий',
+	age: 23,
+	email: 'ivan@gmail.com',
+	phone: '+7-999-999-9-9',
+});
 
-	const onTodoSave = (todoId) => {
-		const { title, completed } = findTodo(todos, todoId) || {};
+const reducer = (state, action) => {
+	const { type, payload } = action;
 
-		if (todoId === NEW_TODO_ID) {
-			createTodo({ title, completed }).then((todo) => {
-				let updatedTodos = setTodoInTodos(todos, {
-					id: NEW_TODO_ID,
-					isEditing: false,
-				});
-				updatedTodos = removeTodoInTodos(updatedTodos, NEW_TODO_ID);
-				updatedTodos = addTodoInTodos(updatedTodos, todo);
-				setTodos(updatedTodos);
-			});
-		} else {
-			updateTodo({ id: todoId, title }).then(() => {
-				setTodos(setTodoInTodos(todos, { id: todoId, isEditing: false }));
-			});
+	switch (type) {
+		case 'SET_USER_DATA': {
+			return payload;
 		}
-	};
+		case 'SET_USER_AGE': {
+			return {
+				...state,
+				age: payload,
+			};
+		}
+		default:
+			return state;
+	}
+};
 
-	const onTodoEdit = (id) => {
-		setTodos(setTodoInTodos(todos, { id, isEditing: true }));
-	};
+export const App = () => {
+	const [userData, dispatch] = useReducer(reducer, {});
 
-	const onTodoTitleChange = (id, newTitle) => {
-		setTodos(setTodoInTodos(todos, { id, title: newTitle }));
-	};
+	// const dispatch = (action) => {
+	// 	const newState = reducer(userData, action);
 
-	const onTodoCompletedChange = (id, newCompleted) => {
-		updateTodo({ id, completed: newCompleted }).then(() => {
-			setTodos(setTodoInTodos(todos, { id, completed: newCompleted }));
-		});
-	};
-
-	const onTodoRemove = (id) => {
-		deleteTodo(id).then(() => setTodos(removeTodoInTodos(todos, id)));
-	};
+	// 	setUserData(newState);
+	// };
 
 	useEffect(() => {
-		readTodos(searchPhrase, isAlphabetSorting).then((loadedTodos) =>
-			setTodos(loadedTodos),
-		);
-	}, [searchPhrase, isAlphabetSorting]);
+		const userDataFromServer = getUserFromServer();
+		dispatch({ type: 'SET_USER_DATA', payload: userDataFromServer });
+	}, []);
+
+	const onUserChange = () => {
+		const anotherUserDataFromServer = getAnotherUserFromServer();
+		dispatch({ type: 'SET_USER_DATA', payload: anotherUserDataFromServer });
+	};
 
 	return (
-		<div className={styles.app}>
-			<ControlPanelContext.Provider
-				value={{ setSearchPhrase, setIsAlphabetSorting }}
-			>
-				<ControlPanel onTodoAdd={onTodoAdd} />
-			</ControlPanelContext.Provider>
-			<div>
-				{todos.map(({ id, title, completed, isEditing = false }) => (
-					<Todo
-						key={id}
-						id={id}
-						title={title}
-						completed={completed}
-						isEditing={isEditing}
-						onEdit={() => onTodoEdit(id)}
-						onTitleChange={(newTitle) => onTodoTitleChange(id, newTitle)}
-						onCompletedChange={(newCompleted) =>
-							onTodoCompletedChange(id, newCompleted)
-						}
-						onSave={() => onTodoSave(id)}
-						onRemove={() => onTodoRemove(id)}
-					/>
-				))}
+		<AppContext.Provider value={{ userData, dispatch }}>
+			<div className={styles.app}>
+				<Header />
+				<hr />
+				<UserBlock />
+				<button onClick={onUserChange}>Сменить пользователя</button>
 			</div>
-		</div>
+		</AppContext.Provider>
 	);
 };
