@@ -1,6 +1,6 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useState } from 'react';
 import { Header, UserBlock } from './components';
-import { AppContext } from './context';
+import { store } from './store';
 import styles from './app.module.css';
 
 const getUserFromServer = () => ({
@@ -19,51 +19,26 @@ const getAnotherUserFromServer = () => ({
 	phone: '+7-999-999-9-9',
 });
 
-const reducer = (state, action) => {
-	const { type, payload } = action;
-
-	switch (type) {
-		case 'SET_USER_DATA': {
-			return payload;
-		}
-		case 'SET_USER_AGE': {
-			return {
-				...state,
-				age: payload,
-			};
-		}
-		default:
-			return state;
-	}
-};
-
 export const App = () => {
-	const [userData, dispatch] = useReducer(reducer, {});
-
-	// const dispatch = (action) => {
-	// 	const newState = reducer(userData, action);
-
-	// 	setUserData(newState);
-	// };
-
+	const [myRen, setMyRen] = useState(null);
 	useEffect(() => {
 		const userDataFromServer = getUserFromServer();
-		dispatch({ type: 'SET_USER_DATA', payload: userDataFromServer });
+		store.dispatch({ type: 'SET_USER_DATA', payload: userDataFromServer });
+		setMyRen(store.getState());
 	}, []);
 
 	const onUserChange = () => {
 		const anotherUserDataFromServer = getAnotherUserFromServer();
-		dispatch({ type: 'SET_USER_DATA', payload: anotherUserDataFromServer });
+		store.dispatch({ type: 'SET_USER_DATA', payload: anotherUserDataFromServer });
+		setMyRen(store.getState());
 	};
 
 	return (
-		<AppContext.Provider value={{ userData, dispatch }}>
-			<div className={styles.app}>
-				<Header />
-				<hr />
-				<UserBlock />
-				<button onClick={onUserChange}>Сменить пользователя</button>
-			</div>
-		</AppContext.Provider>
+		<div className={styles.app}>
+			<Header />
+			<hr />
+			<UserBlock />
+			<button onClick={onUserChange}>Сменить пользователя</button>
+		</div>
 	);
 };

@@ -1,19 +1,28 @@
-import { useContext } from 'react';
-import { AppContext } from '../../../../context';
+import { useEffect, useState } from 'react';
+import { store } from '../../../../store';
 
 export const UserPersonalInfo = () => {
-	const { userData, dispatch } = useContext(AppContext);
-	const { name, age, email, phone } = userData;
+	const { name, age } = store.getState();
+	const [myRen, setMyRen] = useState(null);
+
+	// setMyRen(store.getState());
 
 	const onUserUpdate = () => {
+		const { name, email, phone } = store.getState();
 		const newUserData = { name, age: 30, email, phone };
 		// setUserData(newUserData);
-		dispatch({ type: 'SET_USER_DATA', payload: newUserData });
+		store.dispatch({ type: 'SET_USER_DATA', payload: newUserData });
+		setMyRen(store.getState());
 	};
 
 	const onUserAgeDecrease = () => {
-		dispatch({ type: 'SET_USER_AGE', payload: 15 });
+		store.dispatch({ type: 'SET_USER_AGE', payload: 15 });
+		setMyRen(store.getState());
 	};
+
+	useEffect(() => {
+		setMyRen(store.getState());
+	}, []);
 
 	return (
 		<div>
